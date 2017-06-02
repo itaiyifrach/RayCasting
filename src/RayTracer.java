@@ -234,7 +234,6 @@ public class RayTracer {
                 else {
                     // get color of pixel (i,j) using rbgData
                     shadowValue = getShadowValue(hit);
-                    //System.out.println("SHADOW VAL = " + shadowValue);
                     int mat_idx = hit.getSurface().getMaterialIndex();
                     Material mat = materials.get(mat_idx - 1);
                     rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (mat.getDiff().cartesian(0) * shadowValue)));
@@ -334,10 +333,6 @@ public class RayTracer {
 
     private double getShadowValue(Intersection hit) {
         double result = 0, temp;
-
-        if (hit.getSurface() instanceof  Sphere) {
-
-        }
 
         for (Light light: this.lights) {
             // getting the area light grid according number of shadow rays

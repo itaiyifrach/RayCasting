@@ -21,7 +21,7 @@ public class Light {
         // get the offset on the Plane
         double offset = position.dot(N);
         // constructing the plane
-        Plane lightPlane = new Plane(this.position, offset, -1);
+        Plane lightPlane = new Plane(N, offset, -1);
 
 
         // TODO: compute the light grid
