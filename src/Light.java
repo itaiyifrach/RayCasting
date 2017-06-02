@@ -59,12 +59,12 @@ public class Light {
 
         for (Light light: lights) {
             Ray lightRay = new Ray(light.position, (hit.getPoint().minus(light.position).direction()));  // the ray from light to hit point
-            count += light.getShadowHit(lightRay, hit.getPoint(), scene);
+            count += light.getShadowHit(lightRay, hit, scene);
         }
         return (count / lights.length);
     }
 
-    private double getShadowHit(Ray ray, Vector hitPoint, RayTracer scene) {
+    private double getShadowHit(Ray ray, Intersection hit, RayTracer scene) {
         Vector tempHit;
         Vector p0 = ray.getStart();
         double tempDist, tempTransValue;
@@ -72,10 +72,13 @@ public class Light {
         ArrayList<Double> hitTranspValues = new ArrayList<>();
 
         // distance to checked surface
-        double maxDist = hitPoint.distanceTo(p0);
+        double maxDist = hit.getPoint().distanceTo(p0);
 
         // searching if there is an intersection before checked surface. is so, then add it to the Surfaces List
         for (Surface surface : scene.getSurfaces()) {
+            if (surface == hit.getSurface()) {          // if the checked surface is the same then continue to next surface
+                continue;
+            }
             tempHit = surface.findIntersection(ray);
             if (tempHit != null) {
                 tempDist = tempHit.distanceTo(p0);
