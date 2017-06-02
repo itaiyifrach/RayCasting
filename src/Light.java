@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Light {
     private Vector position;
@@ -31,6 +32,7 @@ public class Light {
         Light lights[] = new Light[sh_rays*sh_rays];
         double lightWidth = radius / sh_rays;
         double lightHeight = lightWidth;
+        double randomX, randomY;
 
         int count = 0;
         double moveRight, moveUp;
@@ -38,12 +40,13 @@ public class Light {
         //build point lights
         for (int i = 0; i < sh_rays; i++) {
             for (int j = 0; j < sh_rays; j++) {
-                moveRight = (radius / 2 - i) * lightWidth;
-                moveUp = (radius / 2 - j) * lightHeight;
+                randomX = lightWidth * new Random().nextDouble();
+                randomY = lightHeight * new Random().nextDouble();
+                moveRight = ((radius / 2 - i - 1) * lightWidth) + (randomX * lightWidth);
+                moveUp = ((radius / 2 - j - 1) * lightHeight) + (randomY * lightHeight);
                 vecX = rightDirection.scale(moveRight);
                 vecY = upDirection.scale(moveUp);
 
-                // TODO: random position
                 pos = position.plus(vecX).plus(vecY);
 
                 lights[count] = new Light(pos, color, spec, shadow, radius);
