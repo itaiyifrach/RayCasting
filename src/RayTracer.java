@@ -1,6 +1,6 @@
 //package RayTracing;
 
-import java.awt.Transparency;
+import java.awt.*;
 import java.awt.color.*;
 import java.awt.image.*;
 import java.io.BufferedReader;
@@ -17,16 +17,16 @@ import javax.imageio.ImageIO;
  */
 public class RayTracer {
 
+    private Camera camera;
+    private Scene scene;
     public int imageWidth;
     public int imageHeight;
     private Vector bg_color;    // background color (r, g, b)
     private int sh_rays;     // root number of shadow rays (N^2 rays will be shot)
     private int rec_max;        // maximum number of recursions
     private int ss_level;       // super sampling level
-    private Camera camera;
-    private ArrayList<Surface> surfaces;
-    private ArrayList<Material> materials;
-    private ArrayList<Light> lights;
+
+
 
 
     /**
@@ -84,9 +84,9 @@ public class RayTracer {
         int lineNum = 0;
         System.out.println("Started parsing scene file " + sceneFileName);
 
-        this.materials = new ArrayList<>();
-        this.lights = new ArrayList<>();
-        this.surfaces = new ArrayList<>();
+        this.scene = new Scene();
+
+
 
         while ((line = r.readLine()) != null)
         {
@@ -124,13 +124,14 @@ public class RayTracer {
 
                     System.out.println(String.format("Parsed general settings (line %d)", lineNum));
                 }
+
                 else if (code.equals("mtl"))
                 {
                     Material mtr = new Material(new Vector(Double.parseDouble(params[0]), Double.parseDouble(params[1]), Double.parseDouble(params[2])),
                             new Vector(Double.parseDouble(params[3]), Double.parseDouble(params[4]), Double.parseDouble(params[5])),
                             new Vector(Double.parseDouble(params[6]), Double.parseDouble(params[7]), Double.parseDouble(params[8])),
                             Float.parseFloat(params[9]), Float.parseFloat(params[10]));
-                    this.materials.add(mtr);
+                    this.scene.getMaterials().add(mtr);
 
                     System.out.println(String.format("Parsed material (line %d)", lineNum));
                 }
@@ -138,7 +139,7 @@ public class RayTracer {
                 {
                     Sphere sph = new Sphere(new Vector(Double.parseDouble(params[0]), Double.parseDouble(params[1]), Double.parseDouble(params[2])),
                             Float.parseFloat(params[3]), Integer.parseInt(params[4]));
-                    this.surfaces.add(sph);
+                    this.scene.getSurfaces().add(sph);
 
                     System.out.println(String.format("Parsed sphere (line %d)", lineNum));
                 }
@@ -146,7 +147,7 @@ public class RayTracer {
                 {
                     Plane pln = new Plane(new Vector(Double.parseDouble(params[0]), Double.parseDouble(params[1]), Double.parseDouble(params[2])),
                             Integer.parseInt(params[3]), Integer.parseInt(params[4]));
-                    this.surfaces.add(pln);
+                    this.scene.getSurfaces().add(pln);
 
                     System.out.println(String.format("Parsed plane (line %d)", lineNum));
                 }
@@ -156,7 +157,7 @@ public class RayTracer {
                             new Vector(Double.parseDouble(params[3]), Double.parseDouble(params[4]), Double.parseDouble(params[5])),
                             new Vector(Double.parseDouble(params[6]), Double.parseDouble(params[7]), Double.parseDouble(params[8])),
                             Integer.parseInt(params[9]));
-                    this.surfaces.add(trg);
+                    this.scene.getSurfaces().add(trg);
 
                     System.out.println(String.format("Parsed cylinder (line %d)", lineNum));
                 }
@@ -165,7 +166,7 @@ public class RayTracer {
                     Light lgt = new Light(new Vector(Double.parseDouble(params[0]), Double.parseDouble(params[1]), Double.parseDouble(params[2])),
                             new Vector(Double.parseDouble(params[3]), Double.parseDouble(params[4]), Double.parseDouble(params[5])),
                             Float.parseFloat(params[6]), Float.parseFloat(params[7]), Float.parseFloat(params[8]));
-                    this.lights.add(lgt);
+                    this.scene.getLights().add(lgt);
 
                     System.out.println(String.format("Parsed light (line %d)", lineNum));
                 }
@@ -221,6 +222,7 @@ public class RayTracer {
         double pixelWidth = camera.getScreenWidth() / imageWidth;
         double pixelHeight = imageRatio * pixelWidth;
         double shadowValue;
+        Color pixelColor;
         for (int i = 0; i < this.imageWidth; i++) {
             for (int j = 0; j < this.imageHeight; j++) {
                 Ray ray = Ray.constructRayThroughPixel(camera, i, j, imageWidth, imageHeight, pixelWidth, pixelHeight);
@@ -234,11 +236,13 @@ public class RayTracer {
                 else {
                     // get color of pixel (i,j) using rbgData
                     shadowValue = getShadowValue(hit);
+                    pixelColor = getColor(hit);
+
                     int mat_idx = hit.getSurface().getMaterialIndex();
-                    Material mat = materials.get(mat_idx - 1);
-                    rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (mat.getDiff().cartesian(0) * shadowValue)));
-                    rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * (mat.getDiff().cartesian(1)  * shadowValue)));
-                    rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * (mat.getDiff().cartesian(2))  * shadowValue));
+                    Material mat = scene.getMaterials().get(mat_idx - 1);
+                    rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(0) * shadowValue)));
+                    rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(1)  * shadowValue)));
+                    rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(2))  * shadowValue));
                 }
             }
         }
@@ -312,7 +316,7 @@ public class RayTracer {
         double tempDist, minDist = Double.POSITIVE_INFINITY;
 
         // searching for minimum intersection point
-        for (Surface surface : surfaces) {
+        for (Surface surface : scene.getSurfaces()) {
             tempHit = surface.findIntersection(ray);
             if (tempHit != null) {
                 tempDist = tempHit.distanceTo(p0);
@@ -327,18 +331,136 @@ public class RayTracer {
             return null;
         }
         else {
-            return new Intersection(hitSurface, hitPoint);
+            return new Intersection(hitSurface, hitPoint, ray);
         }
     }
+
+    public Color getColor(Intersection intersection){
+        int maxRecForLight;
+        Color pixelColor = new Color();
+
+        for (Light sourceLight : this.scene.getLights()) {
+
+
+                maxRecForLight = rec_max;
+                Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex());
+
+
+                Ray lightRay = buildLightSourceRay(sourceLight, intersection);
+                Intersection lightSourceIntersection = getIntersection(lightRay);
+
+                if(lightSourceIntersection == intersection){
+                    pixelColor = getColorBySurface(lightSourceIntersection, material);
+                    return pixelColor;
+                }
+
+
+                Color colorValBySurface = getColorBySurface(intersection, material); // add light value param/
+
+                if(material.getTrans() > 0){
+
+                    // 1. build new ray from most far away hit point with same direction ;
+                    // 2. find inter section to this ray ;
+                    // 3. if we have inter section then
+                    // 4.
+
+                    Vector rayDirectionVec = intersection.getHitRay().direction.scale(-1);
+                    Ray rayThroughSurface = new Ray(intersection.getPoint(), rayDirectionVec);
+                    Intersection intersectionTrans = getIntersection(rayThroughSurface);
+
+                    colorValBySurface.addColor(getColor(intersectionTrans, maxRecForLight -1));
+
+                }
+
+                if(material.isReflectence()){
+                    Ray reflectenceRay = intersection.getReflectionRay();
+                    Intersection reflectenceIntersection = getIntersection(reflectenceRay);
+                    colorValBySurface.addColor(getColor(intersection, maxRecForLight - 1));
+                }
+
+                pixelColor.addColor(colorValBySurface);
+
+            }
+
+
+        return pixelColor;
+    }
+
+    private Ray buildLightSourceRay(Light sourceLight, Intersection intersection){
+        Vector tmpVector;
+
+        tmpVector = sourceLight.getPosition().minus(intersection.getPoint()).direction();
+        Ray lightRay = new Ray(sourceLight.getPosition(), tmpVector.direction());
+
+        return lightRay;
+    }
+
+    private Color getColor(Intersection intersection, int maxRecLevel){
+
+        if (maxRecLevel == 0){
+            return new Color();
+        }
+
+        if(intersection.isSurface()){
+
+            Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex());
+            Color colorValBySurface = getColorBySurface(intersection, material);
+
+            if(material.getTrans() > 0){
+
+                Vector rayDirectionVec = intersection.getHitRay().direction.scale(-1);
+                Ray rayThroughSurface = new Ray(intersection.getPoint(), rayDirectionVec);
+                Intersection intersectionTrans = getIntersection(rayThroughSurface);
+                if(intersectionTrans.isSurface()){
+                    maxRecLevel = maxRecLevel -1;
+                    colorValBySurface.addColor(this.getColor(intersectionTrans, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                }
+                // 1. build new ray from most far away hit point with same direction ;
+                // 2. find inter section to this ray ;
+                // 3. if we have inter section then
+                // 4.
+
+            }
+
+            if(material.isReflectence()){
+                Ray reflectenceRay = intersection.getReflectionRay();
+                Intersection reflectenceIntersection = getIntersection(reflectenceRay);
+                if(reflectenceIntersection.isSurface()){
+                    maxRecLevel = maxRecLevel -1;
+                    colorValBySurface.addColor(this.getColor(reflectenceIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                }
+            }
+
+        }
+        return new Color(scene.getmBackGroundColor());
+    }
+
+    private Color getColorBySurface(Intersection intersection ,Material material){
+        Vector diffVec = material.getDiff();
+        Vector specVec = material.getSpec();
+
+        double transVal = material.getTrans();
+
+        Color color = new Color();
+
+        color =  color.diffAndSpecValues(diffVec, specVec);
+        return color.multypleByScalar(transVal);
+
+    }
+
+
+
+
+
 
     private double getShadowValue(Intersection hit) {
         double result = 0, temp;
 
-        for (Light light: this.lights) {
+        for (Light light: this.scene.getLights()) {
             // getting the area light grid according number of shadow rays
             Light[] lightsGrid = light.getAreaLight(hit.getPoint(), this.sh_rays);
             // computing the shadow value at hit point
-            temp = light.computeSoftShadow(lightsGrid, hit, this);
+            temp = light.computeSoftShadow(lightsGrid, hit, this.scene);
             // TODO: check how to calculate the shadow value on hit point, by all lights. I currently do multiplication
             if (result == 0) {
                 result = temp;
@@ -379,16 +501,5 @@ public class RayTracer {
         return camera;
     }
 
-    public ArrayList<Surface> getSurfaces() {
-        return surfaces;
-    }
-
-    public ArrayList<Material> getMaterials() {
-        return materials;
-    }
-
-    public ArrayList<Light> getLights() {
-        return lights;
-    }
 }
 

@@ -34,4 +34,8 @@ public class Material {
     public float getTrans() {
         return trans;
     }
+
+    public boolean isReflectence(){
+        return !(refl.isZeroVector());
+    }
 }

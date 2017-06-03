@@ -26,6 +26,11 @@
 public class Vector {
 
     private final int n;         // length of the vector
+
+    public double[] getData() {
+        return data;
+    }
+
     private double[] data;       // array of vector's components
 
     // create the zero vector of length n
@@ -144,9 +149,14 @@ public class Vector {
 
     // return the corresponding unit vector
     public Vector direction() {
+        System.out.print(this.toString());
         if (this.norm() == 0.0)
             throw new ArithmeticException("zero-vector has no direction");
         return this.scale(1.0 / this.norm());
+    }
+
+    public boolean isZeroVector(){
+        return (this.data[0] == 0 && this.data[1] == 0 && this.data[2] == 0);
     }
 
     // return a string representation of the vector

@@ -2,6 +2,10 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Light {
+    public Vector getPosition() {
+        return position;
+    }
+
     private Vector position;
     private Vector color;
     private float spec;
@@ -57,7 +61,7 @@ public class Light {
         return lights;
     }
 
-    public double computeSoftShadow(Light[] lights, Intersection hit, RayTracer scene) {
+    public double computeSoftShadow(Light[] lights, Intersection hit, Scene scene) {
         double count = 0;
 
         for (Light light: lights) {
@@ -67,7 +71,7 @@ public class Light {
         return (count / lights.length);
     }
 
-    private double getShadowHit(Ray ray, Intersection hit, RayTracer scene) {
+    private double getShadowHit(Ray ray, Intersection hit, Scene scene) {
         Vector tempHit;
         Vector p0 = ray.getStart();
         double tempDist, tempTransValue;
