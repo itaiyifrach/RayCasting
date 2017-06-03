@@ -113,7 +113,7 @@ public class RayTracer {
                 else if (code.equals("set"))
                 {
                     this.bg_color = new Vector(Double.parseDouble(params[0]), Double.parseDouble(params[1]), Double.parseDouble(params[2]));
-                    rec_max = Integer.parseInt(params[3]);
+                    this.sh_rays = Integer.parseInt(params[3]);
                     this.rec_max = Integer.parseInt(params[4]);
                     this.ss_level = 2; // default value is 2
                     if (params.length == 6) {
@@ -221,7 +221,6 @@ public class RayTracer {
         double imageRatio = imageHeight / imageWidth;
         double pixelWidth = camera.getScreenWidth() / imageWidth;
         double pixelHeight = imageRatio * pixelWidth;
-        double shadowValue;
         Color pixelColor;
         for (int i = 0; i < this.imageWidth; i++) {
             for (int j = 0; j < this.imageHeight; j++) {
@@ -235,7 +234,6 @@ public class RayTracer {
                 }
                 else {
                     // get color of pixel (i,j) using rbgData
-                    //shadowValue = getShadowValue(hit);
                     pixelColor = getColor(hit);
 
                     rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(0))));
@@ -360,7 +358,7 @@ public class RayTracer {
         }
     }
 
-    public Color getColor(Intersection intersection){
+    public Color getColor(Intersection intersection) {
         int maxRecForLight = rec_max;
         Color pixelColor = new Color();
         Surface surface = intersection.getSurface();
@@ -445,9 +443,10 @@ public class RayTracer {
     }
 
     private Color getColorBySurface(Light light, Intersection intersection, Material material) {
-        double cos, dotProduct;
+        double cos, dotProduct, shadowValue;
+        Color totalColor;
         Vector specularColor = new Vector(0, 0, 0);
-        Vector diffColor, totalColor;
+        Vector diffColor;
         Vector N = intersection.getNormal();                                 // normal vector of light ray with the hit point
         Vector L = intersection.getHitRay().getDirection();                  // light ray direction
         Vector reflected = intersection.getReflectionRay().getDirection();   // reflected ray direction
@@ -467,7 +466,7 @@ public class RayTracer {
                     specularColor = specularColor.scale(Math.pow(cos, material.getPhong()));
                 }
 
-                // TODO: this is the shadow calculation :
+                // TODO: this is the shadow calculation (Nataly's):
                 /**
                 lightScreen = new Screen(L, light.position, light.lightWidth, light.lightWidth, this.shadowRays, this.shadowRays, 1);
                 p = lightScreen.howMuchIlluminated(hitPoint);
@@ -475,8 +474,19 @@ public class RayTracer {
                 IL = light.color.cloneVector().multiplyBy((1+light.shadowIntensity*(p-1)));
                 totalColor = IL.multiplyColor(difColor.add(specularColor)).add(totalColor);
                  */
-                totalColor = diffColor.plus(specularColor);     // need to mult the shadow value here...
-                return (new Color(totalColor));
+
+                // TODO: this is the shadow calculation (Itai's):
+                // getting the area light grid according number of shadow rays
+                Light[] lightsGrid = light.getAreaLight(intersection.getPoint(), this.sh_rays);
+                // computing the shadow value at hit point
+                shadowValue = light.computeSoftShadow(lightsGrid, intersection, this.scene);
+                Vector illuminateLight = light.getColor().scale(1 + (light.getShadow()*(shadowValue - 1)));
+                Color lightColor = new Color(illuminateLight);
+                /////
+
+                totalColor = new Color(lightColor);
+                totalColor.multColor(new Color(diffColor.plus(specularColor)));
+                return totalColor;
             }
         }
         return null;
