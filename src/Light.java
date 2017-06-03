@@ -120,7 +120,22 @@ public class Light {
             // the sum might be greater than 1. in that case, we return 1
             return Math.min(sum, 1);
         }
+    }
 
+    public Vector getColor() {
+        return color;
+    }
+
+    public float getSpec() {
+        return spec;
+    }
+
+    public float getShadow() {
+        return shadow;
+    }
+
+    public float getRadius() {
+        return radius;
     }
 }
 

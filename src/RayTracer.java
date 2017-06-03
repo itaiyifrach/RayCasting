@@ -368,11 +368,15 @@ public class RayTracer {
         //System.out.println("hey from getColorMain method, intersection point point is :=" + intersection.getPoint().toString());
         for (Light sourceLight : this.scene.getLights()) {
             //System.out.println("hey from getColorMain method, source_light point is :=" + sourceLight.getPosition().toString());
+            // constructing the light ray to hit point, and finding first intersection
             Ray lightRay = buildLightSourceRay(sourceLight, intersection);
             Intersection lightSourceIntersection = getIntersection(lightRay);
 
+            // if the hit surface is the checked surface from the pixel ray, then the light hits the point directly
+            // in that case, we calculate the color value it induced on the surface
+            // otherwise, there is no effect from that light (but there is a shadow effect), we continue to the next one
             if (lightSourceIntersection.getSurface() == surface) {
-                Color colorValPerLight = this.getColor(intersection, maxRecForLight);
+                Color colorValPerLight = this.getColor(sourceLight, intersection, maxRecForLight);
                 pixelColor.addColor(colorValPerLight);
             }
         }
@@ -389,7 +393,7 @@ public class RayTracer {
         return lightRay;
     }
 
-    private Color getColor(Intersection intersection, int maxRecLevel){
+    private Color getColor(Light light, Intersection intersection, int maxRecLevel) {
         if (maxRecLevel == 0){
             return new Color();
         }
@@ -398,7 +402,8 @@ public class RayTracer {
         if (intersection != null) {
             Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex() - 1);
             // calculate the diffuse and specular values of this surface...
-            Color colorValBySurface = getColorBySurface(material);
+            Vector N = intersection.getNormal();
+            Color colorValBySurface = getColorBySurface(light, intersection, material);
 
             // if the surface is transference, the we continue to search background surfaces
             if (material.getTrans() > 0){
@@ -409,7 +414,7 @@ public class RayTracer {
                 // if the surface isn't null
                 if (transIntersection != null) {
                     maxRecLevel = maxRecLevel - 1;
-                    Color transColor = this.getColor(transIntersection, maxRecLevel);
+                    Color transColor = this.getColor(light, transIntersection, maxRecLevel);
                     transColor.multypleByScalar(material.getTrans());
                     colorValBySurface.addColor(transColor);
                 }
@@ -427,7 +432,7 @@ public class RayTracer {
 
                 if (reflectionIntersection != null) {
                     maxRecLevel = maxRecLevel - 1;
-                    Color reflectionColor = this.getColor(reflectionIntersection, maxRecLevel);
+                    Color reflectionColor = this.getColor(light, reflectionIntersection, maxRecLevel);
                     reflectionColor.multColor(new Color(material.getRefl()));
                     colorValBySurface.addColor(reflectionColor);
                 }
@@ -437,20 +442,44 @@ public class RayTracer {
         else {
             return new Color(scene.getmBackGroundColor());
         }
-
     }
 
-    private Color getColorBySurface(Material material){
-        Vector diffVec = material.getDiff();
-        Vector specVec = material.getSpec();
+    private Color getColorBySurface(Light light, Intersection intersection, Material material) {
+        double cos, dotProduct;
+        Vector specularColor = new Vector(0, 0, 0);
+        Vector diffColor, totalColor;
+        Vector N = intersection.getNormal();                                 // normal vector of light ray with the hit point
+        Vector L = intersection.getHitRay().getDirection();                  // light ray direction
+        Vector reflected = intersection.getReflectionRay().getDirection();   // reflected ray direction
 
-        double transVal = material.getTrans();
+        dotProduct = L.dot(N);   // checking L*N value
+        if (dotProduct <= 0) {    // if the light is behind the object
+            // TODO: check what to return in that case
+            diffColor = new Vector(0,0,0);
+            return (new Color(diffColor));
+        }
+        else {                  // if light in front of the object
+            if(!material.getDiff().isZeroVector() || !material.getSpec().isZeroVector()) {
+                diffColor = (material.getDiff()).scale(dotProduct);
+                cos = L.dot(reflected);
+                if (cos > 0) {
+                    specularColor = material.getSpec().scale(light.getSpec());
+                    specularColor = specularColor.scale(Math.pow(cos, material.getPhong()));
+                }
 
-        Color color = new Color();
-
-        color =  color.diffAndSpecValues(diffVec, specVec);
-        return color.multypleByScalar(1 - transVal);
-
+                // TODO: this is the shadow calculation :
+                /**
+                lightScreen = new Screen(L, light.position, light.lightWidth, light.lightWidth, this.shadowRays, this.shadowRays, 1);
+                p = lightScreen.howMuchIlluminated(hitPoint);
+//						if(p==0) p=(1-light.shadowIntensity);
+                IL = light.color.cloneVector().multiplyBy((1+light.shadowIntensity*(p-1)));
+                totalColor = IL.multiplyColor(difColor.add(specularColor)).add(totalColor);
+                 */
+                totalColor = diffColor.plus(specularColor);     // need to mult the shadow value here...
+                return (new Color(totalColor));
+            }
+        }
+        return null;
     }
 
     private double getShadowValue(Intersection hit) {

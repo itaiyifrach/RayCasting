@@ -38,4 +38,5 @@ public class Material {
     public boolean isReflectence(){
         return !(refl.isZeroVector());
     }
+
 }

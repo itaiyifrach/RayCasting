@@ -27,8 +27,7 @@ public class Intersection {
         Vector dir = ray.getDirection();
 
         // getting normal vector
-        Vector N = hitSurface.getNormalVector(hitPoint);
-        N = N.scale(-1);
+        Vector N = getNormal();
 
         // reflection direction
         double dp = dir.dot(N);
@@ -52,8 +51,7 @@ public class Intersection {
         Vector dir = hitRay.getDirection();
 
         // getting normal vector
-        Vector N = hitSurface.getNormalVector(hitPoint);
-        N = N.scale(-1);
+        Vector N = getNormal();
 
         // reflection direction
         double dp = dir.dot(N);
@@ -71,6 +69,13 @@ public class Intersection {
         Vector refDirection = (new Vector(result)).direction();
 
         return new Ray(hitRay.getStart(), refDirection);
+    }
+
+    public Vector getNormal() {
+        Vector N = hitSurface.getNormalVector(hitPoint);
+        N = N.scale(-1);
+
+        return N;
     }
 
     public Surface getSurface() {
