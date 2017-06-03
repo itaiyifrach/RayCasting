@@ -28,6 +28,16 @@ public class Color {
         this.setRgbValues(getRgbValues().plus(other.getRgbValues()));
     }
 
+    protected void multColor(Color other) {
+        double[] multRes = new double[3];
+
+        for (int i = 0; i < multRes.length; i++ ) {
+            multRes[i] = this.rgbValues.cartesian(i) * other.rgbValues.cartesian(i);
+        }
+
+        this.setRgbValues(new Vector(multRes));
+    }
+
     protected Color multypleByScalar(double scalar){
         this.setRgbValues(this.getRgbValues().scale(scalar));
         return this;

@@ -236,13 +236,6 @@ public class RayTracer {
                 else {
                     // get color of pixel (i,j) using rbgData
                     //shadowValue = getShadowValue(hit);
-                    int r = 0;
-                    if (i == 166 && j == 166) {
-                        r = 1;
-                    }
-                    if (i == 166 && j == 167) {
-                        r = 1;
-                    }
                     pixelColor = getColor(hit);
 
                     rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(0))));
@@ -415,8 +408,10 @@ public class RayTracer {
 
                 // if the surface isn't null
                 if (transIntersection != null) {
-                    maxRecLevel = maxRecLevel -1;
-                    colorValBySurface.addColor(this.getColor(transIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                    maxRecLevel = maxRecLevel - 1;
+                    Color transColor = this.getColor(transIntersection, maxRecLevel);
+                    transColor.multypleByScalar(material.getTrans());
+                    colorValBySurface.addColor(transColor);
                 }
                 // 1. build new ray from most far away hit point with same direction ;
                 // 2. find inter section to this ray ;
@@ -431,13 +426,18 @@ public class RayTracer {
                 Intersection reflectionIntersection = getIntersection(reflectionRay, intersection.getSurface());
 
                 if (reflectionIntersection != null) {
-                    maxRecLevel = maxRecLevel -1;
-                    colorValBySurface.addColor(this.getColor(reflectionIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                    maxRecLevel = maxRecLevel - 1;
+                    Color reflectionColor = this.getColor(reflectionIntersection, maxRecLevel);
+                    reflectionColor.multColor(new Color(material.getRefl()));
+                    colorValBySurface.addColor(reflectionColor);
                 }
             }
-
+            return colorValBySurface;
         }
-        return new Color(scene.getmBackGroundColor());
+        else {
+            return new Color(scene.getmBackGroundColor());
+        }
+
     }
 
     private Color getColorBySurface(Material material){
