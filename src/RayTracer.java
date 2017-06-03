@@ -335,53 +335,52 @@ public class RayTracer {
         }
     }
 
+    public Intersection getIntersection(Ray ray, Surface originSurface) {
+        Vector tempHit, hitPoint = null;
+        Vector p0 = ray.getStart();
+        Surface hitSurface = null;
+        double tempDist, minDist = Double.POSITIVE_INFINITY;
+
+        // searching for minimum intersection point
+        for (Surface surface : scene.getSurfaces()) {
+            tempHit = surface.findIntersection(ray);
+            if (tempHit != null && originSurface != originSurface) {
+                tempDist = tempHit.distanceTo(p0);
+                if (tempDist < minDist || hitSurface == null) {
+                    minDist = tempDist;
+                    hitSurface = surface;
+                    hitPoint = new Vector(tempHit);
+                }
+            }
+        }
+        if (hitSurface == null) {       // no intersection...
+            return null;
+        }
+        else {
+            return new Intersection(hitSurface, hitPoint, ray);
+        }
+    }
+
     public Color getColor(Intersection intersection){
         int maxRecForLight;
         Color pixelColor = new Color();
+        Surface surface = intersection.getSurface();
 
+        System.out.println("hey from getColorMain method, intersection point point is :=" + intersection.getPoint().toString());
         for (Light sourceLight : this.scene.getLights()) {
 
+            System.out.println("hey from getColorMain method, source_light point is :=" + sourceLight.getPosition().toString());
+            maxRecForLight = rec_max;
+            Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex());
 
-                maxRecForLight = rec_max;
-                Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex());
+            Ray lightRay = buildLightSourceRay(sourceLight, intersection);
+            Intersection lightSourceIntersection = getIntersection(lightRay);
 
-
-                Ray lightRay = buildLightSourceRay(sourceLight, intersection);
-                Intersection lightSourceIntersection = getIntersection(lightRay);
-
-                if(lightSourceIntersection == intersection){
-                    pixelColor = getColorBySurface(lightSourceIntersection, material);
-                    return pixelColor;
-                }
-
-
-                Color colorValBySurface = getColorBySurface(intersection, material); // add light value param/
-
-                if(material.getTrans() > 0){
-
-                    // 1. build new ray from most far away hit point with same direction ;
-                    // 2. find inter section to this ray ;
-                    // 3. if we have inter section then
-                    // 4.
-
-                    Vector rayDirectionVec = intersection.getHitRay().direction.scale(-1);
-                    Ray rayThroughSurface = new Ray(intersection.getPoint(), rayDirectionVec);
-                    Intersection intersectionTrans = getIntersection(rayThroughSurface);
-
-                    colorValBySurface.addColor(getColor(intersectionTrans, maxRecForLight -1));
-
-                }
-
-                if(material.isReflectence()){
-                    Ray reflectenceRay = intersection.getReflectionRay();
-                    Intersection reflectenceIntersection = getIntersection(reflectenceRay);
-                    colorValBySurface.addColor(getColor(intersection, maxRecForLight - 1));
-                }
-
-                pixelColor.addColor(colorValBySurface);
-
+            if (lightSourceIntersection == intersection) {
+                Color colorValPerLight = this.getColor(intersection, maxRecForLight);
+                pixelColor.addColor(colorValPerLight);
             }
-
+        }
 
         return pixelColor;
     }
@@ -390,7 +389,7 @@ public class RayTracer {
         Vector tmpVector;
 
         tmpVector = sourceLight.getPosition().minus(intersection.getPoint()).direction();
-        Ray lightRay = new Ray(sourceLight.getPosition(), tmpVector.direction());
+        Ray lightRay = new Ray(sourceLight.getPosition(), tmpVector);
 
         return lightRay;
     }
@@ -404,16 +403,17 @@ public class RayTracer {
         if(intersection.isSurface()){
 
             Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex());
-            Color colorValBySurface = getColorBySurface(intersection, material);
+            Color colorValBySurface = getColorBySurface(material);
 
             if(material.getTrans() > 0){
 
-                Vector rayDirectionVec = intersection.getHitRay().direction.scale(-1);
-                Ray rayThroughSurface = new Ray(intersection.getPoint(), rayDirectionVec);
-                Intersection intersectionTrans = getIntersection(rayThroughSurface);
-                if(intersectionTrans.isSurface()){
+
+                Ray transRay = new Ray(intersection.getPoint(), intersection.getHitRay().direction);
+                Intersection transIntersection = getIntersection(transRay,intersection.getSurface());
+
+                if(transIntersection.isSurface()){
                     maxRecLevel = maxRecLevel -1;
-                    colorValBySurface.addColor(this.getColor(intersectionTrans, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                    colorValBySurface.addColor(this.getColor(transIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
                 }
                 // 1. build new ray from most far away hit point with same direction ;
                 // 2. find inter section to this ray ;
@@ -423,11 +423,11 @@ public class RayTracer {
             }
 
             if(material.isReflectence()){
-                Ray reflectenceRay = intersection.getReflectionRay();
-                Intersection reflectenceIntersection = getIntersection(reflectenceRay);
-                if(reflectenceIntersection.isSurface()){
+                Ray reflectionRay = intersection.getReflectionRay();
+                Intersection reflectionIntersection = getIntersection(reflectionRay, intersection.getSurface());
+                if(reflectionIntersection.isSurface()){
                     maxRecLevel = maxRecLevel -1;
-                    colorValBySurface.addColor(this.getColor(reflectenceIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
+                    colorValBySurface.addColor(this.getColor(reflectionIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
                 }
             }
 
@@ -435,7 +435,7 @@ public class RayTracer {
         return new Color(scene.getmBackGroundColor());
     }
 
-    private Color getColorBySurface(Intersection intersection ,Material material){
+    private Color getColorBySurface(Material material){
         Vector diffVec = material.getDiff();
         Vector specVec = material.getSpec();
 
@@ -444,7 +444,7 @@ public class RayTracer {
         Color color = new Color();
 
         color =  color.diffAndSpecValues(diffVec, specVec);
-        return color.multypleByScalar(transVal);
+        return color.multypleByScalar(1 - transVal);
 
     }
 
