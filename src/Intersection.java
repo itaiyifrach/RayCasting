@@ -80,8 +80,4 @@ public class Intersection {
     public Vector getPoint() {
         return hitPoint;
     }
-
-    public boolean isSurface(){
-        return (this != null);
-    }
 }

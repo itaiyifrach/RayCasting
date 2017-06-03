@@ -236,13 +236,20 @@ public class RayTracer {
                 else {
                     // get color of pixel (i,j) using rbgData
                     //shadowValue = getShadowValue(hit);
+                    int r = 0;
+                    if (i == 166 && j == 166) {
+                        r = 1;
+                    }
+                    if (i == 166 && j == 167) {
+                        r = 1;
+                    }
                     pixelColor = getColor(hit);
 
                     rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(0))));
                     rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(1))));
                     rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * (pixelColor.getRgbValues().cartesian(2))));
                 }
-                System.out.println("(" + i + "," + j + ")");
+                //System.out.println("(" + i + "," + j + ")");
             }
         }
 
@@ -395,7 +402,7 @@ public class RayTracer {
         }
 
         // if the surface isn't null
-        if (intersection.isSurface()){
+        if (intersection != null) {
             Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex() - 1);
             // calculate the diffuse and specular values of this surface...
             Color colorValBySurface = getColorBySurface(material);
@@ -407,7 +414,7 @@ public class RayTracer {
                 Intersection transIntersection = getIntersection(transRay, intersection.getSurface());
 
                 // if the surface isn't null
-                if (transIntersection.isSurface()){
+                if (transIntersection != null) {
                     maxRecLevel = maxRecLevel -1;
                     colorValBySurface.addColor(this.getColor(transIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
                 }
@@ -419,11 +426,11 @@ public class RayTracer {
             }
 
             // if the surface is reflective, the we we continue to search by reflective ray
-            if (material.isReflectence()){
+            if (material.isReflectence()) {
                 Ray reflectionRay = intersection.getReflectionRay();
                 Intersection reflectionIntersection = getIntersection(reflectionRay, intersection.getSurface());
 
-                if( reflectionIntersection.isSurface()){
+                if (reflectionIntersection != null) {
                     maxRecLevel = maxRecLevel -1;
                     colorValBySurface.addColor(this.getColor(reflectionIntersection, maxRecLevel).multypleByScalar(1 - material.getTrans()));
                 }
