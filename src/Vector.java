@@ -149,7 +149,6 @@ public class Vector {
 
     // return the corresponding unit vector
     public Vector direction() {
-        System.out.print(this.toString());
         if (this.norm() == 0.0)
             throw new ArithmeticException("zero-vector has no direction");
         return this.scale(1.0 / this.norm());

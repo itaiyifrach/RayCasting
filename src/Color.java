@@ -20,7 +20,6 @@ public class Color {
         this.rgbValues = new Vector(otherColor.getRgbValues());
     }
 
-
     public void setRgbValues(Vector rgbValues) {
         this.rgbValues = rgbValues;
     }
@@ -35,7 +34,6 @@ public class Color {
     }
 
     protected Color diffAndSpecValues(Vector diffVector, Vector specVector){
-
         Color diffuseVal = new Color(diffVector);
         Color specularVal =  new Color(specVector);
 
