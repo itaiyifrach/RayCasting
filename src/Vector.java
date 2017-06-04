@@ -172,6 +172,12 @@ public class Vector {
         return refDirection;
     }
 
+    public Vector proj(Vector base) {
+        double dotProduct = this.dot(base);
+
+        return base.scale((dotProduct));
+    }
+
     public boolean isZeroVector(){
         return (this.data[0] == 0 && this.data[1] == 0 && this.data[2] == 0);
     }
