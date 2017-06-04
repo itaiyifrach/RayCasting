@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -213,7 +215,7 @@ public class RayTracer {
         // Each of the red, green and blue components should be a byte, i.e. 0-255
 
         // TODO: complete these loops...
-        Intersection hit;
+        List<Intersection> intersections;
         Color totalColor;
         double imageRatio = imageHeight / imageWidth;
         double pixelWidth = camera.getScreenWidth() / imageWidth;
@@ -226,9 +228,10 @@ public class RayTracer {
 
                 Ray ray = Ray.constructRayThroughPixel(camera, i, j, imageWidth, imageHeight, pixelWidth, pixelHeight);
                 // find intersection and find the closest intersection
-                hit = getIntersection(ray);
+                intersections = findAllIntersectionOnRay(ray);
                 // calculating the pixel color
-                totalColor = getColor(hit, this.rec_max);
+                totalColor = getColor(ray, intersections, 0, this.rec_max);
+
                 // setting the pixel color to the byte array
                 fillpixelColor(rgbData, totalColor.getRgbValues(), i, j);
                 System.out.println("(" + i + ", " + j +")");
@@ -393,7 +396,7 @@ public class RayTracer {
             // constructing the reflected ray
             Ray reflected = new Ray(currIntersection.getPoint(), mirror);
             // getting all the hit surfaces from this ray
-            List<Intersection> reflectedIntersecteds = findIntersectedObjects(reflected);
+            List<Intersection> reflectedIntersecteds = findAllIntersectionOnRay(reflected);
             // calculating the reflected color
             reflectionColor = getColor(reflected, reflectedIntersecteds, 0, recIndex+1);
             reflectionColor.multColor(new Color(material.getRefl()));
@@ -539,6 +542,65 @@ public class RayTracer {
         rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (rgbValues.cartesian(0))));
         rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * (rgbValues.cartesian(1))));
         rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * (rgbValues.cartesian(2))));
+    }
+
+    public List<Intersection> findAllIntersectionOnRay(Ray ray) {
+        List<Intersection> allIntersectionOnRay = new ArrayList<>();
+        List<Surface> allSurfaces = new ArrayList<>();
+        Collections.copy(allSurfaces, scene.getSurfaces());
+
+        boolean stopCondition = true;
+        Intersection hit;
+
+        while (stopCondition) {
+            hit = getIntersection(ray, allSurfaces);
+            if(hit == null || hit.getSurface().getMaterial().getTrans() == 0) {
+                stopCondition = false;
+            }
+            else {
+                allSurfaces.remove(hit.getSurface());
+                allIntersectionOnRay.add(hit);
+            }
+        }
+        Comparator<Intersection> cmp = new Comparator<Intersection>() {
+            @Override
+            public int compare(Intersection o1, Intersection o2) {
+                if(camera.getPosition().distanceTo(o1.getPoint()) > camera.getPosition().distanceTo(o2.getPoint())){
+                    return 1;
+                }else if (camera.getPosition().distanceTo(o1.getPoint()) == camera.getPosition().distanceTo(o2.getPoint())){
+                    return 0;
+                }
+                return -1;
+            }
+        };
+        Collections.sort(allIntersectionOnRay, cmp);
+        return allIntersectionOnRay;
+    }
+
+    public Intersection getIntersection(Ray ray, List<Surface> allSurface) {
+        Vector tempHit, hitPoint = null;
+        Vector p0 = ray.getStart();
+        Surface hitSurface = null;
+        double tempDist, minDist = Double.POSITIVE_INFINITY;
+
+        // searching for minimum intersection point
+        for (Surface surface : allSurface) {
+            tempHit = surface.findIntersection(ray);
+            if (tempHit != null) {
+                tempDist = tempHit.distanceTo(p0);
+                if (tempDist < minDist || hitSurface == null) {
+                    minDist = tempDist;
+                    hitSurface = surface;
+                    hitPoint = new Vector(tempHit);
+                }
+            }
+        }
+        if (hitSurface == null) {       // no intersection...
+            return null;
+        }
+        else {
+            return new Intersection(hitSurface, hitPoint, ray);
+        }
     }
 
     // GETTERS:

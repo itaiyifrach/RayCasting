@@ -68,12 +68,7 @@ public class Ray {
         return raysTrohughPixelList;
     }
 
-    /*
-    public static List<Ray> constructRayThroughPixel(Camera camera, int i, int j, int imageWidth, int imageHeight, double pixelWidth, double pixelHeight, int superSamplingLvl) {
-
-        List<Ray> raysTrohughPixelList = new ArrayList<>();
-        Random rnd = new Random();
-
+    public static Ray constructRayThroughPixel(Camera camera, int i, int j, int imageWidth, int imageHeight, double pixelWidth, double pixelHeight) {
         Vector P = camera.getScreenCenterPoint();
         double moveX = (imageWidth / 2 - i) * pixelWidth;
         double moveY = (imageHeight / 2 - j) * pixelHeight;
@@ -87,45 +82,13 @@ public class Ray {
         // calculating P new position from the center
         P = P.plus(vecX).plus(vecY);
 
-        double innerPixelWidth = pixelWidth / (double)superSamplingLvl;
-        double innerPixelHeigh = pixelHeight / (double)superSamplingLvl;
+        // calculating direction vector (P - p0)
+        Vector p0 = camera.getPosition();
+        //System.out.print("hey from constructRayThroughPixel before do direction method on" + p0.toString());
+        Vector V = (P.minus(p0)).direction();
 
-
-        for (int k = 0; k < superSamplingLvl; k++) {
-            for (int l = 0; l < superSamplingLvl; l++) {
-
-                double innerMoveX = (pixelWidth / 2 - i) * innerPixelWidth;
-                double innerMoveY = (pixelHeight / 2 - j) * innerPixelHeigh;
-
-                double infMoveRangeX = innerMoveX/4;
-                double infMoveRangeY = innerMoveX/4;
-
-                Vector innerVecX = camera.getRightDirection();
-                Vector innerVecY = camera.getUpDirection();
-
-
-                innerMoveX =  infMoveRangeX * (rnd.nextDouble());
-                innerVecX = innerVecX.scale(innerMoveX);
-
-                innerMoveY =  infMoveRangeY * (rnd.nextDouble());
-                innerVecY = innerVecY.scale(innerMoveY);
-
-                // calculating P new position from the center
-                P = P.plus(innerVecX).plus(innerVecY);
-
-                // calculating direction vector (P - p0)
-                Vector p0 = camera.getPosition();
-                //System.out.print("hey from constructRayThroughPixel before do direction method on" + p0.toString());
-                Vector V = (P.minus(p0)).direction();
-
-                raysTrohughPixelList.add(new Ray(p0,V));
-
-            }
-        }
-
-        return raysTrohughPixelList;
+        return new Ray(p0, V);
     }
-    */
 
     /**
      *  calculating (P = p0 + t*V)
