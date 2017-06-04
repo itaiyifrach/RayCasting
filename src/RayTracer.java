@@ -230,7 +230,7 @@ public class RayTracer {
                 // find intersection and find the closest intersection
                 intersections = findAllIntersectionOnRay(ray);
                 // calculating the pixel color
-                totalColor = getColor(ray, intersections, 0, this.rec_max);
+                totalColor = getColor(ray, intersections, 0, 0);
 
                 // setting the pixel color to the byte array
                 fillpixelColor(rgbData, totalColor.getRgbValues(), i, j);
@@ -559,7 +559,13 @@ public class RayTracer {
         while (stopCondition) {
             hit = getIntersection(ray, allSurfaces);
             Material material = scene.getMaterials().get(hit.getSurface().getMaterialIndex() - 1);
-            if (hit == null || material.getTrans() == 0) {
+
+            if (hit != null && allIntersectionOnRay.size() == 0 && material.getTrans() == 0) {
+                allIntersectionOnRay.add(hit);
+                stopCondition = false;
+
+            }
+            else if (hit == null || material.getTrans() == 0) {
                 stopCondition = false;
             }
             else {
@@ -578,6 +584,7 @@ public class RayTracer {
                 return -1;
             }
         };
+
         Collections.sort(allIntersectionOnRay, cmp);
         return allIntersectionOnRay;
     }
