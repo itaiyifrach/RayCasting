@@ -12,9 +12,9 @@ public class Ray {
     }
 
     public static List<Ray> constructRayThroughPixel(Camera camera, int i, int j, int imageWidth, int imageHeight, double pixelWidth, double pixelHeight, int superSamplingLvl) {
-
+        int ss_level = superSamplingLvl / 2;
+        Vector p0 = camera.getPosition();
         List<Ray> raysTrohughPixelList = new ArrayList<>();
-        Random rnd = new Random();
 
         Vector P = camera.getScreenCenterPoint();
         double moveX = (imageWidth / 2 - i) * pixelWidth;
@@ -28,43 +28,39 @@ public class Ray {
 
         // calculating P new position from the center
         P = P.plus(vecX).plus(vecY);
+        // calculating direction vector (pos - p0)
+        Vector V = (P.minus(p0)).direction();
 
-        double innerPixelWidth = pixelWidth / (double)superSamplingLvl;
-        double innerPixelHeigh = pixelHeight / (double)superSamplingLvl;
-
-
-        for (int k = 0; k < superSamplingLvl; k++) {
-            for (int l = 0; l < superSamplingLvl; l++) {
-
-                double innerMoveX = (pixelWidth / 2 - i) * innerPixelWidth;
-                double innerMoveY = (pixelHeight / 2 - j) * innerPixelHeigh;
-
-                double infMoveRangeX = innerMoveX/4;
-                double infMoveRangeY = innerMoveY/4;
-
-                Vector innerVecX = camera.getRightDirection();
-                Vector innerVecY = camera.getUpDirection();
-
-
-                innerMoveX =  infMoveRangeX * (rnd.nextDouble());
-                innerVecX = innerVecX.scale(innerMoveX);
-
-                innerMoveY =  infMoveRangeY * (rnd.nextDouble());
-                innerVecY = innerVecY.scale(innerMoveY);
-
-                // calculating P new position from the center
-                P = P.plus(innerVecX).plus(innerVecY);
-
-                // calculating direction vector (P - p0)
-                Vector p0 = camera.getPosition();
-                //System.out.print("hey from constructRayThroughPixel before do direction method on" + p0.toString());
-                Vector V = (P.minus(p0)).direction();
-
-                raysTrohughPixelList.add(new Ray(p0,V));
-
-            }
+        if (ss_level == 1 || ss_level == 0) {
+            raysTrohughPixelList.add(new Ray(p0,V));
+            return raysTrohughPixelList;
         }
 
+        double innerPixelWidth = pixelWidth / (double)ss_level;
+        double innerPixelHeight = pixelHeight / (double)ss_level;
+        double randomX, randomY;
+        double moveRight, moveUp;
+        Vector pos;
+        vecX = camera.getRightDirection();
+        vecY = camera.getUpDirection();
+
+        //build point lights
+        for (int k = 0; k < ss_level; k++) {
+            for (int l = 0; l < ss_level; l++) {
+                randomX = innerPixelWidth * new Random().nextDouble();
+                randomY = innerPixelHeight * new Random().nextDouble();
+                moveRight = ((ss_level / 2 - k - 1) * innerPixelWidth) + (randomX * innerPixelWidth);
+                moveUp = ((ss_level / 2 - l - 1) * innerPixelHeight) + (randomY * innerPixelHeight);
+                vecX = vecX.scale(moveRight);
+                vecY = vecY.scale(moveUp);
+
+                pos = P.plus(vecX).plus(vecY);
+                // calculating direction vector (pos - p0)
+                V = (pos.minus(p0)).direction();
+
+                raysTrohughPixelList.add(new Ray(p0,V));
+            }
+        }
         return raysTrohughPixelList;
     }
 
@@ -84,7 +80,6 @@ public class Ray {
 
         // calculating direction vector (P - p0)
         Vector p0 = camera.getPosition();
-        //System.out.print("hey from constructRayThroughPixel before do direction method on" + p0.toString());
         Vector V = (P.minus(p0)).direction();
 
         return new Ray(p0, V);
@@ -103,12 +98,5 @@ public class Ray {
 
     public Vector getDirection() {
         return direction;
-    }
-    public void setDirection(Vector direction) {
-        this.direction = direction;
-    }
-
-    public void printRay() {
-        System.out.println(start.toString() + "+ t" + direction.toString());
     }
 }
