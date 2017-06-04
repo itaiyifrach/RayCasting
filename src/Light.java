@@ -28,13 +28,18 @@ public class Light {
         this.radius = radius;
     }
 
-    public Light[] getAreaLight(Vector upVector, Vector hitPoint, int sh_rays) {
-        // get direction of light to hit point
-        Vector lookAt = (hitPoint.minus(position)).direction();
-        Vector reflect = lookAt.reflect(upVector);
+    public Light[] getAreaLight(Vector hitPoint, int sh_rays) {
+        // get direction of light (the Normal of the area grid)
+        Vector N = (hitPoint.minus(position)).direction();
+        // get the offset on the Plane
+        double offset = position.dot(N);
+        // constructing the plane
+        Plane lightPlane = new Plane(N, offset, -1);
+
+
         // TODO: compute the light grid
-        Vector upDirection = (upVector.minus(reflect)).direction();
-        Vector rightDirection = upDirection.cross(lookAt);
+        Vector rightDirection = (lightPlane.getPointOnPlane().minus(position)).direction();
+        Vector upDirection = rightDirection.cross(N);
 
         Light lights[] = new Light[sh_rays*sh_rays];
         double lightWidth = radius / sh_rays;
@@ -60,7 +65,6 @@ public class Light {
                 count++;
             }
         }
-
         return lights;
     }
 

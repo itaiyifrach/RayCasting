@@ -1,7 +1,6 @@
+import java.util.Comparator;
 
-
-
-public class Intersection {
+public class Intersection implements Comparable {
 
     private Surface hitSurface;
     private Vector hitPoint;
@@ -87,4 +86,8 @@ public class Intersection {
     }
 
 
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
 }
