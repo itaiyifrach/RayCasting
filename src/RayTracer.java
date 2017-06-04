@@ -367,9 +367,6 @@ public class RayTracer {
      *
      */
     private Color getColor(Ray ray, List<Intersection> intersections, int listIndex, int recIndex) {
-        if (intersections == null) {
-            return new Color(this.scene.getmBackGroundColor());
-        }
         // if all the intersections calculated, or no more recursions, then return scene background color
         if (listIndex >= intersections.size() || recIndex >= this.rec_max) {
             return new Color(this.scene.getmBackGroundColor());
@@ -425,7 +422,7 @@ public class RayTracer {
             bgColor.multipleByScalar(trValue);              // (background color)*transparency
             pixelColor.multipleByScalar(1-trValue);         // (diffuse+specular)*(1-transparency)
             pixelColor.addColor(pixelColor);
-            pixelColor.addColor(reflectionColor);           // + (reflection color)
+            pixelColor.addColor(reflectionColor);        // + (reflection color)
 
             return pixelColor;
         }
@@ -559,7 +556,13 @@ public class RayTracer {
         while (stopCondition) {
             hit = getIntersection(ray, allSurfaces);
             Material material = scene.getMaterials().get(hit.getSurface().getMaterialIndex() - 1);
-            if (hit == null || material.getTrans() == 0) {
+
+            if(hit != null && allIntersectionOnRay.size() == 0 && material.getTrans() == 0){
+                allIntersectionOnRay.add(hit);
+                stopCondition = false;
+
+            }
+            else if (hit == null || material.getTrans() == 0) {
                 stopCondition = false;
             }
             else {
