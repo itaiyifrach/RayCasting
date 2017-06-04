@@ -547,14 +547,16 @@ public class RayTracer {
     public List<Intersection> findAllIntersectionOnRay(Ray ray) {
         List<Intersection> allIntersectionOnRay = new ArrayList<>();
         List<Surface> allSurfaces = new ArrayList<>();
-        Collections.copy(allSurfaces, scene.getSurfaces());
+        //Collections.copy(allSurfaces, scene.getSurfaces());
+        allSurfaces.addAll(scene.getSurfaces());
 
         boolean stopCondition = true;
         Intersection hit;
 
         while (stopCondition) {
             hit = getIntersection(ray, allSurfaces);
-            if(hit == null || hit.getSurface().getMaterial().getTrans() == 0) {
+            Material material = scene.getMaterials().get(hit.getSurface().getMaterialIndex() - 1);
+            if (hit == null || material.getTrans() == 0) {
                 stopCondition = false;
             }
             else {
