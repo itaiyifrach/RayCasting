@@ -16,6 +16,28 @@ public class Ray {
         this.direction = new Vector(direction);
     }
 
+    public static Ray constructRayThroughPixel(Camera camera, int i, int j, int imageWidth, int imageHeight, double pixelWidth, double pixelHeight) {
+        Vector P = camera.getScreenCenterPoint();
+        double moveX = (imageWidth / 2 - i) * pixelWidth;
+        double moveY = (imageHeight / 2 - j) * pixelHeight;
+
+        Vector vecX = camera.getRightDirection();
+        vecX = vecX.scale(moveX);
+
+        Vector vecY = camera.getUpDirection();
+        vecY = vecY.scale(moveY);
+
+        // calculating P new position from the center
+        P = P.plus(vecX).plus(vecY);
+
+        // calculating direction vector (P - p0)
+        Vector p0 = camera.getPosition();
+        //System.out.print("hey from constructRayThroughPixel before do direction method on" + p0.toString());
+        Vector V = (P.minus(p0)).direction();
+
+        return new Ray(p0, V);
+    }
+
     public static List<Ray> constructRayThroughPixel(Camera camera, int i, int j, int imageWidth, int imageHeight, double pixelWidth, double pixelHeight, int superSamplingLvl) {
 
         List<Ray> raysTrohughPixelList = new ArrayList<>();

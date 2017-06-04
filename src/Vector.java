@@ -154,6 +154,24 @@ public class Vector {
         return this.scale(1.0 / this.norm());
     }
 
+    public Vector reflect(Vector reflectFrom) {
+        // reflection direction
+        double dp = this.dot(reflectFrom);
+        if(dp < 0) {
+            dp = 0;
+        }
+
+        // calculating reflection direction vector
+        double[] result = {0.0, 0.0, 0.0};
+        for (int i = 0; i < 3; i++) {
+            double normalAxis = reflectFrom.cartesian(i);
+            double directionAxis = this.cartesian(i);
+            result[i] = directionAxis - 2*normalAxis*dp;
+        }
+        Vector refDirection = (new Vector(result)).direction();
+        return refDirection;
+    }
+
     public boolean isZeroVector(){
         return (this.data[0] == 0 && this.data[1] == 0 && this.data[2] == 0);
     }
