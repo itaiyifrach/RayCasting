@@ -27,8 +27,6 @@ public class RayTracer {
     private int ss_level;       // super sampling level
 
 
-
-
     /**
      * Runs the ray tracer. Takes scene file, output image file and image size as input.
      */
@@ -358,6 +356,7 @@ public class RayTracer {
         }
     }
 
+
     public Color getColor(Intersection intersection) {
         int maxRecForLight = rec_max;
         Color pixelColor = new Color();
@@ -392,7 +391,7 @@ public class RayTracer {
     }
 
     private Color getColor(Light light, Intersection intersection, int maxRecLevel) {
-        if (maxRecLevel == 0){
+        if (maxRecLevel == 0) {
             return new Color();
         }
 
@@ -400,7 +399,6 @@ public class RayTracer {
         if (intersection != null) {
             Material material = this.scene.getMaterials().get(intersection.getSurface().getMaterialIndex() - 1);
             // calculate the diffuse and specular values of this surface...
-            Vector N = intersection.getNormal();
             Color colorValBySurface = getColorBySurface(light, intersection, material);
 
             // if the surface is transference, the we continue to search background surfaces
@@ -442,53 +440,67 @@ public class RayTracer {
         }
     }
 
-    private Color getColorBySurface(Light light, Intersection intersection, Material material) {
+    // intersection parameter is from pixel ray!!
+    private Color getColorBySurface(Intersection intersection) {
+        Surface hitSurface = intersection.getSurface();
+        Material hitMaterial = this.scene.getMaterials().get(hitSurface.getMaterialIndex() - 1);
         double cos, dotProduct, shadowValue;
         Color totalColor;
-        Vector specularColor = new Vector(0, 0, 0);
-        Vector diffColor;
-        Vector N = intersection.getNormal();                                 // normal vector of light ray with the hit point
-        Vector L = intersection.getHitRay().getDirection();                  // light ray direction
-        Vector reflected = intersection.getReflectionRay().getDirection();   // reflected ray direction
+        //Vector specularColor = new Vector(0, 0, 0);
+        Vector specularColor, diffColor, N, L, R;
+        N = intersection.getNormal();             // normal vector of pixel ray with the hit point
+        //Vector reflected = intersection.getReflectionRay().getDirection();   // reflected ray direction
 
-        dotProduct = L.dot(N);   // checking L*N value
-        if (dotProduct <= 0) {    // if the light is behind the object
-            // TODO: check what to return in that case
-            diffColor = new Vector(0,0,0);
-            return (new Color(diffColor));
-        }
-        else {                  // if light in front of the object
-            if(!material.getDiff().isZeroVector() || !material.getSpec().isZeroVector()) {
-                diffColor = (material.getDiff()).scale(dotProduct);
-                cos = L.dot(reflected);
-                if (cos > 0) {
-                    specularColor = material.getSpec().scale(light.getSpec());
-                    specularColor = specularColor.scale(Math.pow(cos, material.getPhong()));
+        // iterating over all scene lights
+        for (Light light: this.scene.getLights()) {
+            specularColor = new Vector(0, 0, 0);
+
+            // constructing the light ray to hit point
+            Ray lightRay = buildLightSourceRay(light, intersection);
+            L = lightRay.getDirection();                            // light ray direction, maybe switch direction?
+            Intersection lightInter = new Intersection(hitSurface, intersection.getPoint(), lightRay);
+            R = lightInter.getReflectionRay().getDirection();
+
+            dotProduct = L.dot(N);   // checking L*N value
+            if (dotProduct <= 0) {    // if the light is behind the object
+                // TODO: check what to return in that case
+                diffColor = new Vector(0,0,0);
+                return (new Color(diffColor));
+            }
+            else {                  // if light in front of the object
+                if (!hitMaterial.getDiff().isZeroVector() || !hitMaterial.getSpec().isZeroVector()) {
+                    diffColor = (hitMaterial.getDiff()).scale(dotProduct);
+                    cos = L.dot(R);
+                    if (cos > 0) {
+                        specularColor = hitMaterial.getSpec().scale(light.getSpec());
+                        specularColor = specularColor.scale(Math.pow(cos, hitMaterial.getPhong()));
+                    }
+
+                    // TODO: this is the shadow calculation (Nataly's):
+                    /**
+                     lightScreen = new Screen(L, light.position, light.lightWidth, light.lightWidth, this.shadowRays, this.shadowRays, 1);
+                     p = lightScreen.howMuchIlluminated(hitPoint);
+                     //						if(p==0) p=(1-light.shadowIntensity);
+                     IL = light.color.cloneVector().multiplyBy((1+light.shadowIntensity*(p-1)));
+                     totalColor = IL.multiplyColor(difColor.add(specularColor)).add(totalColor);
+                     */
+
+                    // TODO: this is the shadow calculation (Itai's):
+                    // getting the area light grid according number of shadow rays
+                    Light[] lightsGrid = light.getAreaLight(intersection.getPoint(), this.sh_rays);
+                    // computing the shadow value at hit point
+                    shadowValue = light.computeSoftShadow(lightsGrid, intersection, this.scene);
+                    Vector illuminateLight = light.getColor().scale(1 + (light.getShadow()*(shadowValue - 1)));
+                    Color lightColor = new Color(illuminateLight);
+                    /////
+
+                    totalColor = new Color(lightColor);
+                    totalColor.multColor(new Color(diffColor.plus(specularColor)));
+                    return totalColor;
                 }
-
-                // TODO: this is the shadow calculation (Nataly's):
-                /**
-                lightScreen = new Screen(L, light.position, light.lightWidth, light.lightWidth, this.shadowRays, this.shadowRays, 1);
-                p = lightScreen.howMuchIlluminated(hitPoint);
-//						if(p==0) p=(1-light.shadowIntensity);
-                IL = light.color.cloneVector().multiplyBy((1+light.shadowIntensity*(p-1)));
-                totalColor = IL.multiplyColor(difColor.add(specularColor)).add(totalColor);
-                 */
-
-                // TODO: this is the shadow calculation (Itai's):
-                // getting the area light grid according number of shadow rays
-                Light[] lightsGrid = light.getAreaLight(intersection.getPoint(), this.sh_rays);
-                // computing the shadow value at hit point
-                shadowValue = light.computeSoftShadow(lightsGrid, intersection, this.scene);
-                Vector illuminateLight = light.getColor().scale(1 + (light.getShadow()*(shadowValue - 1)));
-                Color lightColor = new Color(illuminateLight);
-                /////
-
-                totalColor = new Color(lightColor);
-                totalColor.multColor(new Color(diffColor.plus(specularColor)));
-                return totalColor;
             }
         }
+
         return null;
     }
 
