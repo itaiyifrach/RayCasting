@@ -7,12 +7,20 @@ public class Light {
     }
 
     private Vector position;
-    private Vector color;
+    private Color color;
     private float spec;
     private float shadow;
     private float radius;
 
     public Light(Vector position, Vector color, float spec, float shadow, float radius) {
+        this.position = position;
+        this.color = new Color(color);
+        this.spec = spec;
+        this.shadow = shadow;
+        this.radius = radius;
+    }
+
+    public Light(Vector position, Color color, float spec, float shadow, float radius) {
         this.position = position;
         this.color = color;
         this.spec = spec;
@@ -122,7 +130,7 @@ public class Light {
         }
     }
 
-    public Vector getColor() {
+    public Color getColor() {
         return color;
     }
 

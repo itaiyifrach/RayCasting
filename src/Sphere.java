@@ -1,6 +1,6 @@
 
 
-public class Sphere implements Surface {
+public class Sphere extends Geometry implements Surface {
     private Vector center;      // position of the sphere center (x, y, z)
     private float radius;       // radius
     private int mat_idx;        // material index
@@ -60,5 +60,10 @@ public class Sphere implements Surface {
 
     public int getMaterialIndex() {
         return mat_idx;
+    }
+
+    @Override
+    public Material getMaterial() {
+        return this.material;
     }
 }

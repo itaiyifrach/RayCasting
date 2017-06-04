@@ -1,6 +1,6 @@
 
 
-public class Plane implements Surface {
+public class Plane extends Geometry implements Surface {
     private Vector position;
     private double offset;
     private Vector pointOnPlane;
@@ -58,5 +58,10 @@ public class Plane implements Surface {
 
     public Vector getPointOnPlane() {
         return pointOnPlane;
+    }
+
+    @Override
+    public Material getMaterial() {
+        return this.material;
     }
 }

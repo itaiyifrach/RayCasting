@@ -170,6 +170,29 @@ public class Vector {
         return s.toString();
     }
 
+    public static Vector multipleByCoordinates(Vector _X_, Vector _Y_){
+        if(_X_.length() != _Y_.length()){
+            return null;
+        }
+        int len = _X_.length();
+        Vector _Z_ = new Vector();
+        for (int i = 0; i < len; i++) {
+            _Z_.getData()[i] = _X_.getData()[i] * _Y_.getData()[i];
+        }
+        return _Z_;
+    }
+
+    public boolean isEqualTo(Vector other){
+        if(this.length() != other.length()){
+            return false;
+        }
+        for (int i = 0; i < this.length(); i++) {
+            if(this.data[i] != other.data[i]){
+                return false;
+            }
+        }
+        return true;
+    }
 
     // test client
 //    public static void main(String[] args) {

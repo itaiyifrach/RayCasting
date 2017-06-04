@@ -38,9 +38,17 @@ public class Color {
         this.setRgbValues(new Vector(multRes));
     }
 
-    protected Color multypleByScalar(double scalar){
+    protected Color multipleByScalar(double scalar){
         this.setRgbValues(this.getRgbValues().scale(scalar));
         return this;
+    }
+
+    public static Color multipleColor(Color rgb_a, Color rgb_b){
+        Vector rgb_1 = rgb_a.rgbValues;
+        Vector rgb_2 = rgb_b.rgbValues;
+
+        Vector result_rgb = Vector.multipleByCoordinates(rgb_1, rgb_2);
+        return new Color(result_rgb);
     }
 
     protected Color diffAndSpecValues(Vector diffVector, Vector specVector){

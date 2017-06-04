@@ -8,4 +8,7 @@ public interface Surface {
     Vector getNormalVector(Vector vec);
 
     int getMaterialIndex();
+
+    Material getMaterial();
+
 }

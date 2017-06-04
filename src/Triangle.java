@@ -1,6 +1,6 @@
 
 
-public class Triangle implements Surface {
+public class Triangle extends Geometry implements Surface {
     private Vector[] vertices;
     private Vector N;
     private int mat_idx;
@@ -61,5 +61,10 @@ public class Triangle implements Surface {
 
     public int getMaterialIndex() {
         return mat_idx;
+    }
+
+    @Override
+    public Material getMaterial() {
+        return this.material;
     }
 }

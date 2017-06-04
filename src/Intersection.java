@@ -85,4 +85,6 @@ public class Intersection {
     public Vector getPoint() {
         return hitPoint;
     }
+
+
 }
