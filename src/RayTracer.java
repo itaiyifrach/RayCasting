@@ -546,9 +546,15 @@ public class RayTracer {
 
 
     private void fillpixelColor(byte[] rgbData, Vector rgbValues, int i, int j) {
-        rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * (rgbValues.cartesian(0))));
-        rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * (rgbValues.cartesian(1))));
-        rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * (rgbValues.cartesian(2))));
+        // fix heights (if we pass the value 1)
+        double red = Math.min(1, rgbValues.cartesian(0));
+        double green = Math.min(1, rgbValues.cartesian(1));
+        double blue = Math.min(1, rgbValues.cartesian(2));
+
+
+        rgbData[(j * this.imageWidth + i) * 3] = (byte) ((int) (255 * red));
+        rgbData[(j * this.imageWidth + i) * 3 + 1] = (byte) ((int) (255 * green));
+        rgbData[(j * this.imageWidth + i) * 3 + 2] = (byte) ((int) (255 * blue));
     }
 
     public List<Intersection> findAllIntersectionOnRay(Ray ray) {
