@@ -542,11 +542,10 @@ public class RayTracer {
         return 0;
     }
 
-    private Ray buildLightSourceRay(Light sourceLight, Intersection intersection){
+    private Ray buildLightSourceRay(Light sourceLight, Intersection intersection) {
         Vector dirVector;
 
         // TODO: should switch direction?
-        // this is L
         dirVector = (intersection.getPoint().minus(sourceLight.getPosition())).direction();
         Ray lightRay = new Ray(sourceLight.getPosition(), dirVector);
 
@@ -706,7 +705,7 @@ public class RayTracer {
                     // computing the shadow value at hit point
                     shadowValue = light.computeSoftShadow(lightsGrid, intersection, this.scene);
                     Color IL = new Color(light.getColor());
-                    IL.multipleByScalar(1 + (light.getShadow()*(shadowValue - 1)));
+                    IL.multipleByScalar(shadowValue);
                     /////
 
                     totalColor = new Color(IL);
@@ -728,7 +727,7 @@ public class RayTracer {
      */
     private double calculateDiffuseVal(Intersection intersection, Ray lightRay) {
         Vector N = intersection.getNormal();
-        Vector L = lightRay.getDirection();
+        Vector L = (lightRay.getDirection()).scale(-1);
         double cosTeta = N.dot(L);
 
         return cosTeta;
@@ -754,25 +753,6 @@ public class RayTracer {
         double specularVal = Math.pow(cosTeta, phong_specularity_coefficient);
 
         return specularVal;
-    }
-
-    private double getShadowValue(Intersection hit) {
-        double result = 0, temp;
-
-        for (Light light: this.scene.getLights()) {
-            // getting the area light grid according number of shadow rays
-            Light[] lightsGrid = light.getAreaLight(camera.getUp(), hit.getPoint(), this.sh_rays);
-            // computing the shadow value at hit point
-            temp = light.computeSoftShadow(lightsGrid, hit, this.scene);
-            // TODO: check how to calculate the shadow value on hit point, by all lights. I currently do multiplication
-            if (result == 0) {
-                result = temp;
-            } else {
-                result *= temp;
-            }
-        }
-
-        return result;
     }
 
     // GETTERS:
