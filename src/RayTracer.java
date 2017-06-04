@@ -562,6 +562,9 @@ public class RayTracer {
 
         while (stopCondition) {
             hit = getIntersection(ray, allSurfaces);
+            if (hit == null ) {
+                break;
+            }
             Material material = scene.getMaterials().get(hit.getSurface().getMaterialIndex() - 1);
 
             if (hit != null && allIntersectionOnRay.size() == 0 && material.getTrans() == 0) {
