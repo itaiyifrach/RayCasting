@@ -226,6 +226,11 @@ public class RayTracer {
 //                // find intersection and find the closest intersection
 //                this.superSamplingMehod(mListRays, i,j);
 
+                int r = 0;
+                if (i == 171 && j == 162) {
+                    r = 1;
+                }
+
                 Ray ray = Ray.constructRayThroughPixel(camera, i, j, imageWidth, imageHeight, pixelWidth, pixelHeight);
                 // find intersection and find the closest intersection
                 intersections = findAllIntersectionOnRay(ray);
@@ -378,7 +383,6 @@ public class RayTracer {
         // TODO: check transparency color (background color)
         // calculating the background color
         Color bgColor = getColor(ray, intersections, listIndex + 1, recIndex + 1);
-
 
         Intersection currIntersection = intersections.get(listIndex);
         Vector N = currIntersection.getNormal();
